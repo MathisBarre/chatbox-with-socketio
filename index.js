@@ -18,7 +18,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('user disconnected')
   })
 })
-
-http.listen(3000, () => {
-  console.log('Http server listening on *:3000')
+const port = process.env.PORT || 5000
+http.listen(port, () => {
+  console.log(`Http server listening on ${port}`)
 })
