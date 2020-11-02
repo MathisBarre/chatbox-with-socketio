@@ -1,78 +1,87 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Socket.IO chat</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font: 13px Helvetica, Arial;
-      }
-      form {
-        background: #000;
-        padding: 3px;
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-      }
-      form input {
-        border: 0;
-        padding: 10px;
-        width: 90%;
-        margin-right: 0.5%;
-      }
-      form button {
-        width: 9%;
-        background: rgb(130, 224, 255);
-        border: none;
-        padding: 10px;
-      }
-      #messages {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-      }
-      #messages li {
-        padding: 5px 10px;
-      }
-      #messages li:nth-child(odd) {
-        background: #eee;
-      }
-    </style>
-  </head>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbox with socket.io</title>
+  <link href="https://unpkg.com/tailwindcss@^1.9/dist/tailwind.min.css" rel="stylesheet">
+</head>
   <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input placeholder="nickname" id="n" autocomplete="off" /><input placeholder="message" id="m" autocomplete="off" /><button>Send</button>
-    </form>
+    <div class="h-screen max-h-screen flex flex-col">
+      <div class="flex-1 flex" style="max-height:calc(100vh - 68px)">
+        <main id="messages" class="flex-1 overflow-y-auto bg-gray-300 py-1">
+          <!-- <p class="even:bg-gray-200 p-2 "><span class="font-semibold text-white bg-blue-900 rounded px-2 py-1 mr-2">Computer</span>Bienvenue sur la chatbox !</p>
+          <p class="even:bg-gray-200 p-2 "><span class="font-semibold text-white bg-blue-900 rounded px-2 py-1 mr-2">Computer</span>N'hésitez pas à échanger, aucun message n'est sauvegardé !</p>
+          <p class="even:bg-gray-200 p-2 "><span class="font-semibold text-white bg-blue-900 rounded px-2 py-1 mr-2">Computer</span>Vous pouvez voir les autres utilisateurs connectés à droite et vous pouvez envoyer vos messages dans le champ prévu à cette effet en bas. Si personne n'est connecté, amenez vos amis !</p> -->
+        </main>
+        <aside class="w-64 bg-blue-800 overflow-y-auto">
+          <h2 class="text-center text-white p-2 font-semibold">Actuellement connecté</h2>
+          <span class="py-1 px-2 my-2 mx-4 bg-gray-200 block rounded overflow-hidden">Mania</span>
+          <span class="py-1 px-2 my-2 mx-4 bg-gray-200 block rounded overflow-hidden">Phoibos</span>
+        </aside>
+      </div>
+      <form id="form" class="flex p-4 bg-blue-900">
+        <input 
+          autofocus
+          id="message" 
+          placeholder="Votre message..."
+          class="flex-1 form-input block w-full transition duration-150 ease-in-out sm:text-sm sm:leading-5 py-2 px-4 rounded placeholder-gray-900"
+        >
+        <button class="bg-gray-200 px-4 ml-4 rounded font-semibold ">Envoyer</button>
+      </form>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script>
-      $(function () {
-        var socket = io();
-        $("form").submit(function (e) {
-          e.preventDefault(); // prevents page reloading
-          socket.emit("chat message", $("#n").val() + " : " + $("#m").val());
-          $("#messages").append($("<li>").text($("#n").val() + " : " + $("#m").val()));
-          $("#m").val("");
-          return false;
-        });
-        socket.on("chat message", function (msg) {
-          console.log('newmessage');
-          $("#messages").append($("<li>").text(msg));
-        });
-        socket.on("user connected", function (msg) {
-          console.log('userconnected');
-          $("#messages").append($("<li>").text("UN NOUVEAU UTILISATEUR VIENT D'ENTRER DANS LE CHAT"));
-        });
-        socket.on("user disconnected", function (msg) {
-          console.log('userconnected');
-          $("#messages").append($("<li>").text("UN UTILISATEUR VIENT DE SORTIR DU CHAT"));
-        });
+      var pseudo = prompt("Votre pseudo :")
+
+      var socket = io();
+
+      var formElt = document.querySelector("#form")
+      var inputElt = document.querySelector("#message")
+      var mainElt = document.querySelector("#messages")
+
+      function getMsg() {
+        return inputElt.value
+      }
+
+      function displayMessage(pseudo, message) {
+        var newMessageElt = document.createElement("p")
+        newMessageElt.classList.add("even:bg-gray-200", "p-2")
+        newMessageElt.textContent = message
+
+        var newPseudoElt = document.createElement("span")
+        newPseudoElt.classList.add("font-semibold", "text-white", "bg-blue-900", "rounded", "px-2", "py-1", "mr-2")
+        newPseudoElt.textContent = pseudo
+        newMessageElt.prepend(newPseudoElt)
+
+        mainElt.appendChild(newMessageElt)
+
+        inputElt.value = ""
+      }
+
+      formElt.addEventListener("submit", (e) => {
+        e.preventDefault()
+
+        var msg = getMsg()
+        socket.emit("chat message", msg)
+
+        displayMessage(pseudo, msg)
+      })
+
+      socket.on("chat message", (msg) => {
+        displayMessage("Iconnu", msg)
       });
+      
+      // socket.on("user connected", function (msg) {
+      //   console.log('userconnected');
+      //   $("#messages").append($("<li>").text("UN NOUVEAU UTILISATEUR VIENT D'ENTRER DANS LE CHAT"));
+      // });
+
+      // socket.on("user disconnected", function (msg) {
+      //   console.log('userconnected');
+      //   $("#messages").append($("<li>").text("UN UTILISATEUR VIENT DE SORTIR DU CHAT"));
+      // });
     </script>
   </body>
 </html>
