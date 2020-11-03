@@ -14,11 +14,11 @@
           <p class="even:bg-gray-200 p-2 "><span class="font-semibold text-white bg-blue-900 rounded px-2 py-1 mr-2">Computer</span>N'hésitez pas à échanger, aucun message n'est sauvegardé !</p>
           <p class="even:bg-gray-200 p-2 "><span class="font-semibold text-white bg-blue-900 rounded px-2 py-1 mr-2">Computer</span>Vous pouvez voir les autres utilisateurs connectés à droite et vous pouvez envoyer vos messages dans le champ prévu à cette effet en bas. Si personne n'est connecté, amenez vos amis !</p> -->
         </main>
-        <aside class="w-64 bg-blue-800 overflow-y-auto">
-          <h2 class="text-center text-white p-2 font-semibold">Actuellement connecté</h2>
+        <!-- <aside id="users" class="w-64 bg-blue-800 overflow-y-auto">
+          <h2 class="text-center text-white p-2 font-semibold">Utilisateurs connectés depuis votre arrivée</h2>
           <span class="py-1 px-2 my-2 mx-4 bg-gray-200 block rounded overflow-hidden">Mania</span>
           <span class="py-1 px-2 my-2 mx-4 bg-gray-200 block rounded overflow-hidden">Phoibos</span>
-        </aside>
+        </aside> -->
       </div>
       <form id="form" class="flex p-4 bg-blue-900">
         <input 
@@ -31,7 +31,6 @@
       </form>
     </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script>
       var pseudo = prompt("Votre pseudo :")
 
@@ -40,6 +39,7 @@
       var formElt = document.querySelector("#form")
       var inputElt = document.querySelector("#message")
       var mainElt = document.querySelector("#messages")
+      var asideElt = document.querySelector("#users")
 
       function getMsg() {
         return inputElt.value
@@ -56,32 +56,51 @@
         newMessageElt.prepend(newPseudoElt)
 
         mainElt.appendChild(newMessageElt)
+      }
 
-        inputElt.value = ""
+      function addUser(pseudo) {
+        var userElt = document.createElement("span")
+        userElt.classList.add("py-1", "px-2", "my-2", "mx-4", "bg-gray-200", "block", "rounded", "overflow-hidden")
+        userElt.textContent = pseudo
+        userElt.dataset.nickname = pseudo
+
+        asideElt.appendChild(userElt)
+      }
+
+      function removeUser(pseudo) {
+        var userToRemoveElt = document.querySelector(`span[data-nickname="${pseudo}"]`)
+        userToRemoveElt.remove()
       }
 
       formElt.addEventListener("submit", (e) => {
         e.preventDefault()
 
         var msg = getMsg()
-        socket.emit("chat message", msg)
+        socket.emit("chat message", {message:msg,pseudo:pseudo})
 
         displayMessage(pseudo, msg)
+        inputElt.value = ""
       })
 
-      socket.on("chat message", (msg) => {
-        displayMessage("Iconnu", msg)
-      });
-      
-      // socket.on("user connected", function (msg) {
-      //   console.log('userconnected');
-      //   $("#messages").append($("<li>").text("UN NOUVEAU UTILISATEUR VIENT D'ENTRER DANS LE CHAT"));
-      // });
+      socket.on("connect", () => {
+        socket.emit("newUser", pseudo)
+      })
 
-      // socket.on("user disconnected", function (msg) {
-      //   console.log('userconnected');
-      //   $("#messages").append($("<li>").text("UN UTILISATEUR VIENT DE SORTIR DU CHAT"));
-      // });
+      socket.on("disconnect", () => {
+        socket.emit("removeUser", pseudo)
+      })
+
+      socket.on("newUser", (pseudo) => {
+        addUser(pseudo)
+      })
+
+      socket.on("removeUser", (pseudo) => {
+        removeUser(pseudo)
+      })
+
+      socket.on("chat message", ({message, pseudo}) => {
+        displayMessage(pseudo, message)
+      });
     </script>
   </body>
 </html>

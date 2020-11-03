@@ -4,14 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx nodemon index.js",
-    "push":"git push heroku master"
+    "start": "node index.js",
+    "watch": "nodemon index.js",
+    "push": "git push heroku master"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^2.3.0"
+    "lodash": "^4.17.20",
+    "socket.io": "^2.3.0",
+    "standard": "^16.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
   }
 }
